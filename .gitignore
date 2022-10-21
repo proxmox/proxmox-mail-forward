@@ -1,2 +1,7 @@
 Cargo.lock
 target/
+proxmox-mail-forward-*/
+*proxmox-mail-forward*.buildinfo
+*proxmox-mail-forward*.tar.?z
+*proxmox-mail-forward*.changes
+*proxmox-mail-forward*.deb

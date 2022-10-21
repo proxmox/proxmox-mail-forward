@@ -1,0 +1,2 @@
+proxmox-mail-forward: no-manual-page usr/bin/proxmox-mail-forward
+proxmox-mail-forward: setuid-binary usr/bin/proxmox-mail-forward 4755 root/root

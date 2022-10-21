@@ -1,0 +1,5 @@
+rust-proxmox-mail-forward (0.1.0-1) stable; urgency=medium
+
+  * Initial release.
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 20 Oct 2022 11:28:37 +0200
