@@ -143,7 +143,7 @@ fn main() {
     let pve_datacenter_cfg_content = attempt_file_read(PVE_DATACENTER_CFG_FILENAME);
 
     let real_uid = nix::unistd::getuid();
-    if let Err(err) = nix::unistd::seteuid(real_uid) {
+    if let Err(err) = nix::unistd::setresuid(real_uid, real_uid, real_uid) {
         log::error!(
             "mail forward failed: unable to set effective uid to {}: {}",
             real_uid,
