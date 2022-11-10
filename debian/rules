@@ -15,3 +15,7 @@ export CARGO_HOME = $(CURDIR)/debian/cargo_home
 
 override_dh_fixperms:
 	dh_fixperms --exclude proxmox-mail-forward
+
+override_dh_strip:
+	dh_strip
+	patchelf --remove-needed librt.so.1 debian/proxmox-mail-forward/usr/bin/proxmox-mail-forward

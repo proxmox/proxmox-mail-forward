@@ -13,7 +13,8 @@ Build-Depends: debhelper (>= 12),
  librust-proxmox-sys-0.4+default-dev,
  librust-serde-1+default-dev,
  librust-serde-1+derive-dev,
- librust-syslog-4+default-dev
+ librust-syslog-4+default-dev,
+ patchelf,
 Maintainer: Proxmox Support Team <support@proxmox.com>
 Standards-Version: 4.5.1
 Vcs-Git: git://git.proxmox.com/git/proxmox-mail-forward.git
