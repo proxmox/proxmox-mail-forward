@@ -46,7 +46,7 @@ fn normalize_for_return(s: Option<&str>) -> Option<String> {
 
 /// Extract the root user's email address from the PBS user config.
 fn get_pbs_mail_to(content: &str) -> Option<String> {
-    let mut config = SectionConfig::new(&DUMMY_ID_SCHEMA);
+    let mut config = SectionConfig::new(&DUMMY_ID_SCHEMA).allow_unknown_sections(true);
     let user_plugin = SectionConfigPlugin::new(
         "user".to_string(),
         Some("userid".to_string()),
