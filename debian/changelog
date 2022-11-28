@@ -1,3 +1,10 @@
+rust-proxmox-mail-forward (0.1.1-1) stable; urgency=medium
+
+  * support unknown section types in the user config to not fail on eg. tokens
+    in the config
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 28 Nov 2022 09:31:19 +0100
+
 rust-proxmox-mail-forward (0.1.0-1) stable; urgency=medium
 
   * Initial release.
