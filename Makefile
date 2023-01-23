@@ -27,7 +27,7 @@ build:
 	rm -rf $(BUILDDIR) $(BUILDDIR_TMP); mkdir $(BUILDDIR_TMP)
 	cp -a debian \
 	  Cargo.toml src \
-	  Makefile \
+	  Makefile .cargo \
 	  $(BUILDDIR_TMP)
 	rm -f $(BUILDDIR_TMP)/Cargo.lock
 	find $(BUILDDIR_TMP)/debian -name "*.hint" -delete
