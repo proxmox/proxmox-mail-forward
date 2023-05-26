@@ -4,6 +4,12 @@ include /usr/share/dpkg/architecture.mk
 PACKAGE=proxmox-mail-forward
 BUILDDIR ?= $(PACKAGE)-$(DEB_VERSION)
 
+DSC=rust-$(PACKAGE)_$(DEB_VERSION_UPSTREAM).dsc
+DEB=$(PACKAGE)_$(DEB_VERSION)_$(DEB_HOST_ARCH).deb
+DBG_DEB=$(PACKAGE)-dbgsym_$(DEB_VERSION)_$(DEB_HOST_ARCH).deb
+
+DEBS=$(DEB) $(DBG_DEB)
+
 ifeq ($(BUILD_MODE), release)
 CARGO_BUILD_ARGS += --release
 COMPILEDIR := target/release
@@ -12,12 +18,6 @@ COMPILEDIR := target/debug
 endif
 
 CARGO ?= cargo
-
-DEB=$(PACKAGE)_$(DEB_VERSION_UPSTREAM_REVISION)_$(DEB_BUILD_ARCH).deb
-DBG_DEB=$(PACKAGE)-dbgsym_$(DEB_VERSION_UPSTREAM_REVISION)_$(DEB_BUILD_ARCH).deb
-DSC=rust-$(PACKAGE)_$(DEB_VERSION_UPSTREAM_REVISION).dsc
-
-DEBS=$(DEB) $(DBG_DEB)
 
 $(BUILDDIR):
 	rm -rf $@ $@.tmp && mkdir $@.tmp
@@ -54,7 +54,7 @@ install: cargo-build
 
 .PHONY: upload
 upload: $(DEBS)
-	tar cf - $(DEBS) | ssh -X repoman@repo.proxmox.com -- upload --product "pve,pbs" --dist bullseye --arch $(DEB_BUILD_ARCH)
+	tar cf - $(DEBS) | ssh -X repoman@repo.proxmox.com -- upload --product "pve,pbs" --dist bullseye --arch $(DEB_HOST_ARCH)
 
 .PHONY: distclean
 distclean: clean
