@@ -1,20 +1,20 @@
 Source: rust-proxmox-mail-forward
 Section: rust
 Priority: optional
-Build-Depends: debhelper (>= 12),
- cargo:native,
- rustc:native,
- libstd-rust-dev,
- librust-anyhow-1+default-dev,
- librust-log-0.4+default-dev (>= 0.4.17~~),
- librust-nix-0.26+default-dev,
- librust-proxmox-schema-1+default-dev (>= 1.3~~),
- librust-proxmox-section-config-1+default-dev (>= 1.0.2-~~),
- librust-proxmox-sys-0.5+default-dev,
- librust-serde-1+default-dev,
- librust-serde-1+derive-dev,
- librust-syslog-6+default-dev,
- patchelf,
+Build-Depends: cargo:native,
+               debhelper (>= 12),
+               librust-anyhow-1+default-dev,
+               librust-log-0.4+default-dev (>= 0.4.17~~),
+               librust-nix-0.26+default-dev,
+               librust-proxmox-schema-1+default-dev (>= 1.3~~),
+               librust-proxmox-section-config-1+default-dev (>= 1.0.2-~~),
+               librust-proxmox-sys-0.5+default-dev,
+               librust-serde-1+default-dev,
+               librust-serde-1+derive-dev,
+               librust-syslog-6+default-dev,
+               libstd-rust-dev,
+               patchelf,
+               rustc:native,
 Maintainer: Proxmox Support Team <support@proxmox.com>
 Standards-Version: 4.5.1
 Vcs-Git: git://git.proxmox.com/git/proxmox-mail-forward.git
@@ -24,8 +24,7 @@ Rules-Requires-Root: binary-targets
 
 Package: proxmox-mail-forward
 Architecture: any
-Depends: ${misc:Depends},
-         ${shlibs:Depends},
+Depends: ${misc:Depends}, ${shlibs:Depends},
 Description: Proxmox mail forward helper
  This package contains the Proxmox mail forward helper. It forwards mails to
  the address(es) of the root@pam user in Proxmox Backup Server and Proxmox VE.
