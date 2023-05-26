@@ -2,8 +2,7 @@ include /usr/share/dpkg/pkg-info.mk
 include /usr/share/dpkg/architecture.mk
 
 PACKAGE=proxmox-mail-forward
-BUILDDIR ?= $(PACKAGE)-$(DEB_VERSION_UPSTREAM)
-BUILDDIR_TMP ?= $(BUILDDIR).tmp
+BUILDDIR ?= $(PACKAGE)-$(DEB_VERSION)
 
 ifeq ($(BUILD_MODE), release)
 CARGO_BUILD_ARGS += --release
@@ -20,28 +19,22 @@ DSC=rust-$(PACKAGE)_$(DEB_VERSION_UPSTREAM_REVISION).dsc
 
 DEBS=$(DEB) $(DBG_DEB)
 
-.PHONY: build
-build:
-	@echo "Setting Cargo.toml version to: $(DEB_VERSION_UPSTREAM)"
-	sed -i -e 's/^version =.*$$/version = "$(DEB_VERSION_UPSTREAM)"/' Cargo.toml
-	rm -rf $(BUILDDIR) $(BUILDDIR_TMP); mkdir $(BUILDDIR_TMP)
-	cp -a debian \
-	  Cargo.toml src \
-	  Makefile .cargo \
-	  $(BUILDDIR_TMP)
-	rm -f $(BUILDDIR_TMP)/Cargo.lock
-	find $(BUILDDIR_TMP)/debian -name "*.hint" -delete
-	mv $(BUILDDIR_TMP) $(BUILDDIR)
+$(BUILDDIR):
+	rm -rf $@ $@.tmp && mkdir $@.tmp
+	cp -a debian Cargo.toml src Makefile .cargo $@.tmp
+	rm -f $@.tmp/Cargo.lock
+	find $@.tmp/debian -name "*.hint" -delete
+	mv $@.tmp $@
 
 .PHONY: deb
 $(DEBS): deb
-deb: build
+deb: $(BUILDDIR)
 	cd $(BUILDDIR); dpkg-buildpackage -b -us -uc --no-pre-clean
 	lintian $(DEBS)
 
 .PHONY: dsc
 dsc: $(DSC)
-$(DSC): build
+$(DSC): $(BUILDDIR)
 	cd $(BUILDDIR); dpkg-buildpackage -S -us -uc -d -nc
 	lintian $(DSC)
 
