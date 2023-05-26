@@ -26,17 +26,21 @@ $(BUILDDIR):
 	find $@.tmp/debian -name "*.hint" -delete
 	mv $@.tmp $@
 
-.PHONY: deb
+.PHONY: deb dsc
 $(DEBS): deb
 deb: $(BUILDDIR)
 	cd $(BUILDDIR); dpkg-buildpackage -b -us -uc
 	lintian $(DEBS)
 
-.PHONY: dsc
-dsc: $(DSC)
+dsc: clean
+	$(MAKE) $(DSC)
+	lintian $(DSC)
+
 $(DSC): $(BUILDDIR)
 	cd $(BUILDDIR); dpkg-buildpackage -S -us -uc -d
-	lintian $(DSC)
+
+sbuild: $(DSC)
+	sbuild $<
 
 .PHONY: dinstall
 dinstall: $(DEBS)
@@ -62,5 +66,5 @@ distclean: clean
 .PHONY: clean
 clean:
 	cargo clean
-	rm -rf *.deb *.buildinfo *.changes *.dsc rust-$(PACKAGE)_*.tar.?z $(BUILDDIR) $(BUILDDIR_TMP)
+	rm -rf *.deb *.dsc *.buildinfo *.changes *.build rust-$(PACKAGE)*.tar.* $(PACKAGE)-[0-9]*/
 	find . -name '*~' -exec rm {} ';'
