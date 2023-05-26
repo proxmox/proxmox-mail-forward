@@ -27,5 +27,5 @@ Architecture: any
 Depends: ${misc:Depends},
          ${shlibs:Depends},
 Description: Proxmox mail forward helper
- This package contains the Proxmox mail forward helper. It forwards mails to the
- address(es) of the root@pam user in Proxmox Backup Server and Proxmox VE.
+ This package contains the Proxmox mail forward helper. It forwards mails to
+ the address(es) of the root@pam user in Proxmox Backup Server and Proxmox VE.
