@@ -2,6 +2,8 @@
 
 #DH_VERBOSE = 1
 
+include /usr/share/dpkg/pkg-info.mk
+
 export BUILD_MODE=release
 
 CARGO=/usr/share/cargo/bin/cargo
@@ -12,6 +14,11 @@ export CARGO_HOME = $(CURDIR)/debian/cargo_home
 
 %:
 	dh $@
+
+override_dh_auto_configure:
+	@perl -ne 'if (/^version\s*=\s*"(\d+(?:\.\d+)+)"/) { my $$v_cargo = $$1; my $$v_deb = "$(DEB_VERSION_UPSTREAM)"; \
+	    die "ERROR: d/changelog <-> Cargo.toml version mismatch: $$v_cargo != $$v_deb\n" if $$v_cargo ne $$v_deb; exit(0); }' Cargo.toml
+	dh_auto_configure
 
 override_dh_fixperms:
 	dh_fixperms --exclude proxmox-mail-forward
