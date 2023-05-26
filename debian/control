@@ -2,7 +2,7 @@ Source: rust-proxmox-mail-forward
 Section: rust
 Priority: optional
 Build-Depends: cargo:native,
-               debhelper (>= 12),
+               debhelper-compat (= 13),
                librust-anyhow-1+default-dev,
                librust-log-0.4+default-dev (>= 0.4.17~~),
                librust-nix-0.26+default-dev,
