@@ -29,13 +29,13 @@ $(BUILDDIR):
 .PHONY: deb
 $(DEBS): deb
 deb: $(BUILDDIR)
-	cd $(BUILDDIR); dpkg-buildpackage -b -us -uc --no-pre-clean
+	cd $(BUILDDIR); dpkg-buildpackage -b -us -uc
 	lintian $(DEBS)
 
 .PHONY: dsc
 dsc: $(DSC)
 $(DSC): $(BUILDDIR)
-	cd $(BUILDDIR); dpkg-buildpackage -S -us -uc -d -nc
+	cd $(BUILDDIR); dpkg-buildpackage -S -us -uc -d
 	lintian $(DSC)
 
 .PHONY: dinstall
