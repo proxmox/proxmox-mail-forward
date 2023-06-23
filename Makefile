@@ -58,7 +58,7 @@ install: cargo-build
 
 .PHONY: upload
 upload: $(DEBS)
-	tar cf - $(DEBS) | ssh -X repoman@repo.proxmox.com -- upload --product "pve,pbs" --dist bullseye --arch $(DEB_HOST_ARCH)
+	tar cf - $(DEBS) | ssh -X repoman@repo.proxmox.com -- upload --product "pve,pbs" --dist $(DEB_DISTRIBUTION) --arch $(DEB_HOST_ARCH)
 
 .PHONY: distclean
 distclean: clean
