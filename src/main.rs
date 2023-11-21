@@ -25,8 +25,6 @@ use anyhow::Error;
 
 use proxmox_notify::context::pbs::PBS_CONTEXT;
 use proxmox_notify::context::pve::PVE_CONTEXT;
-use proxmox_notify::endpoints::sendmail::SendmailConfig;
-use proxmox_notify::matcher::MatcherConfig;
 use proxmox_notify::Config;
 use proxmox_sys::fs;
 
@@ -74,48 +72,40 @@ fn forward_common(mail: &[u8], config: &Config) -> Result<(), Error> {
 
 /// Forward a mail to PVE's notification system
 fn forward_for_pve(mail: &[u8]) -> Result<(), Error> {
+    proxmox_notify::context::set_context(&PVE_CONTEXT);
     let config = attempt_file_read(PVE_PUB_NOTIFICATION_CFG_FILENAME).unwrap_or_default();
     let priv_config = attempt_file_read(PVE_PRIV_NOTIFICATION_CFG_FILENAME).unwrap_or_default();
 
     let config = Config::new(&config, &priv_config)?;
 
-    proxmox_notify::context::set_context(&PVE_CONTEXT);
     forward_common(mail, &config)
 }
 
 /// Forward a mail to PBS's notification system
 fn forward_for_pbs(mail: &[u8], has_pve: bool) -> Result<(), Error> {
+    proxmox_notify::context::set_context(&PBS_CONTEXT);
+
     let config = if Path::new(PBS_PUB_NOTIFICATION_CFG_FILENAME).exists() {
         let config = attempt_file_read(PBS_PUB_NOTIFICATION_CFG_FILENAME).unwrap_or_default();
         let priv_config = attempt_file_read(PBS_PRIV_NOTIFICATION_CFG_FILENAME).unwrap_or_default();
 
         Config::new(&config, &priv_config)?
     } else {
-        // TODO: This can be removed once PBS has full notification integration
-        let mut config = Config::new("", "")?;
-        if !has_pve {
-            proxmox_notify::api::sendmail::add_endpoint(
-                &mut config,
-                &SendmailConfig {
-                    name: "default-target".to_string(),
-                    mailto_user: Some(vec!["root@pam".to_string()]),
-                    ..Default::default()
-                },
-            )?;
+        // Instantiate empty config.
+        // Note: This will contain the default built-in targets/matchers.
+        let config = Config::new("", "")?;
+        if has_pve {
+            // Skip forwarding if we are co-installed with PVE AND
+            // we do not have our own notifications.cfg file yet
+            // --> We assume that PVE has a sane matcher configured that
+            // forwards the mail properly
+            // TODO: This can be removed once PBS has full notification integration
 
-            proxmox_notify::api::matcher::add_matcher(
-                &mut config,
-                &MatcherConfig {
-                    name: "default-matcher".to_string(),
-                    target: Some(vec!["default-target".to_string()]),
-                    ..Default::default()
-                },
-            )?;
+            return Ok(());
         }
         config
     };
 
-    proxmox_notify::context::set_context(&PBS_CONTEXT);
     forward_common(mail, &config)?;
 
     Ok(())
