@@ -1,3 +1,13 @@
+rust-proxmox-mail-forward (0.2.3) bookworm; urgency=medium
+
+  * fix formatting of Date header to use the C locale
+
+  * include 'type' and 'hostname' metadata field for forwarded mails
+
+  * smtp: forward original message inline instead of nesting
+
+ -- Proxmox Support Team <support@proxmox.com>  Thu, 11 Jan 2024 10:00:22 +0100
+
 rust-proxmox-mail-forward (0.2.2) bookworm; urgency=medium
 
   * do not forward on systems that have Proxmox Backup Server co-installed
