@@ -3,14 +3,18 @@
 #DH_VERBOSE = 1
 
 include /usr/share/dpkg/pkg-info.mk
+include /usr/share/rustc/architecture.mk
 
 export BUILD_MODE=release
 
-CARGO=/usr/share/cargo/bin/cargo
-
 export CFLAGS CXXFLAGS CPPFLAGS LDFLAGS
 export DEB_HOST_RUST_TYPE DEB_HOST_GNU_TYPE
+
+export CARGO=/usr/share/cargo/bin/cargo
 export CARGO_HOME = $(CURDIR)/debian/cargo_home
+
+export DEB_CARGO_CRATE=proxmox-mail-forward_$(DEB_VERSION_UPSTREAM)
+export DEB_CARGO_PACKAGE=proxmox-mail-forward
 
 %:
 	dh $@
@@ -18,6 +22,7 @@ export CARGO_HOME = $(CURDIR)/debian/cargo_home
 override_dh_auto_configure:
 	@perl -ne 'if (/^version\s*=\s*"(\d+(?:\.\d+)+)"/) { my $$v_cargo = $$1; my $$v_deb = "$(DEB_VERSION_UPSTREAM)"; \
 	    die "ERROR: d/changelog <-> Cargo.toml version mismatch: $$v_cargo != $$v_deb\n" if $$v_cargo ne $$v_deb; exit(0); }' Cargo.toml
+	$(CARGO) prepare-debian $(CURDIR)/debian/cargo_registry --link-from-system
 	dh_auto_configure
 
 override_dh_fixperms:

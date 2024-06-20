@@ -54,7 +54,7 @@ cargo-build:
 
 install: cargo-build
 	install -dm755 $(DESTDIR)/usr/bin
-	install -m4755 -o root -g root $(COMPILEDIR)/proxmox-mail-forward $(DESTDIR)/usr/bin/proxmox-mail-forward
+	$(CARGO) install
 
 .PHONY: upload
 upload: $(DEBS)
