@@ -1,3 +1,9 @@
+rust-proxmox-mail-forward (0.3.0) bookworm; urgency=medium
+
+  * update proxmox-notify crate to support the new webhook targets
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 19 Nov 2024 12:45:48 +0100
+
 rust-proxmox-mail-forward (0.2.3) bookworm; urgency=medium
 
   * fix formatting of Date header to use the C locale
