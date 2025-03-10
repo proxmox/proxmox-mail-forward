@@ -23,9 +23,9 @@ use std::path::Path;
 
 use anyhow::Error;
 
+use proxmox_notify::Config;
 use proxmox_notify::context::pbs::PBS_CONTEXT;
 use proxmox_notify::context::pve::PVE_CONTEXT;
-use proxmox_notify::Config;
 use proxmox_sys::fs;
 
 const PVE_CFG_PATH: &str = "/etc/pve";
