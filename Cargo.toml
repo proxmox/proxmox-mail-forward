@@ -6,7 +6,7 @@ authors = [
     "Lukas Wagner <l.wagner@proxmox.com>",
     "Proxmox Support Team <support@proxmox.com>",
 ]
-edition = "2021"
+edition = "2024"
 license = "AGPL-3"
 description = "Proxmox mail forward helper"
 homepage = "https://www.proxmox.com"
