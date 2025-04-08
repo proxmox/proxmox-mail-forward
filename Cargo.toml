@@ -20,4 +20,4 @@ nix = "0.26"
 syslog = "6.0"
 
 proxmox-sys = "0.6"
-proxmox-notify = {version = "0.5", features = ["mail-forwarder", "pve-context", "pbs-context"] }
+proxmox-notify = {version = "0.5.4", features = ["mail-forwarder", "pve-context", "pbs-context"] }
