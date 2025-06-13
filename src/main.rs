@@ -23,6 +23,9 @@ use std::path::Path;
 
 use anyhow::Error;
 
+use proxmox_log::LevelFilter;
+use proxmox_log::Logger;
+use proxmox_log::error;
 use proxmox_notify::Config;
 use proxmox_notify::context::pbs::PBS_CONTEXT;
 use proxmox_notify::context::pve::PVE_CONTEXT;
@@ -42,7 +45,7 @@ fn attempt_file_read<P: AsRef<Path>>(path: P) -> Option<String> {
     match fs::file_read_optional_string(path.as_ref()) {
         Ok(contents) => contents,
         Err(err) => {
-            log::error!("unable to read {path:?}: {err}", path = path.as_ref());
+            error!("unable to read {path:?}: {err:#}", path = path.as_ref());
             None
         }
     }
@@ -112,11 +115,10 @@ fn forward_for_pbs(mail: &[u8], has_pve: bool) -> Result<(), Error> {
 }
 
 fn main() {
-    if let Err(err) = syslog::init(
-        syslog::Facility::LOG_DAEMON,
-        log::LevelFilter::Info,
-        Some("proxmox-mail-forward"),
-    ) {
+    if let Err(err) = Logger::from_env("PROXMOX_LOG", LevelFilter::INFO)
+        .journald()
+        .init()
+    {
         eprintln!("unable to initialize syslog: {err}");
     }
 
@@ -129,19 +131,19 @@ fn main() {
             if Path::new(PVE_CFG_PATH).exists() {
                 has_pve = true;
                 if let Err(err) = forward_for_pve(&mail) {
-                    log::error!("could not forward mail for Proxmox VE: {err}");
+                    error!("could not forward mail for Proxmox VE: {err:#}");
                 }
             }
 
             // Assume a PBS installation if /etc/proxmox-backup exists
             if Path::new(PBS_CFG_PATH).exists() {
                 if let Err(err) = forward_for_pbs(&mail, has_pve) {
-                    log::error!("could not forward mail for Proxmox Backup Server: {err}");
+                    error!("could not forward mail for Proxmox Backup Server: {err:#}");
                 }
             }
         }
         Err(err) => {
-            log::error!("could not read mail from STDIN: {err}")
+            error!("could not read mail from STDIN: {err:#}")
         }
     }
 }
