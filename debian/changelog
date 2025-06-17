@@ -1,3 +1,9 @@
+rust-proxmox-mail-forward (1.0.0) trixie; urgency=medium
+
+  * re-build for Debian 13 Trixie based releases.
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 17 Jun 2025 10:51:21 +0200
+
 rust-proxmox-mail-forward (0.3.3) bookworm; urgency=medium
 
   * ensure any log messages get relayed to the system log.
