@@ -5,18 +5,18 @@ Build-Depends: cargo:native,
                debhelper-compat (= 13),
                dh-cargo (>= 25),
                librust-anyhow-1+default-dev,
-               librust-nix-0.26+default-dev,
-               librust-proxmox-log-0.2+default-dev (>= 0.2.8),
-               librust-proxmox-notify-0.5+default-dev (>= 0.5.4),
-               librust-proxmox-notify-0.5+mail-forwarder-dev,
-               librust-proxmox-notify-0.5+pbs-context-dev,
-               librust-proxmox-notify-0.5+pve-context-dev,
-               librust-proxmox-sys-0.6+default-dev,
+               librust-nix-0.29+default-dev,
+               librust-proxmox-log-1+default-dev,
+               librust-proxmox-notify-1+default-dev,
+               librust-proxmox-notify-1+mail-forwarder-dev,
+               librust-proxmox-notify-1+pbs-context-dev,
+               librust-proxmox-notify-1+pve-context-dev,
+               librust-proxmox-sys-1+default-dev,
                libstd-rust-dev,
                patchelf,
                rustc:native,
 Maintainer: Proxmox Support Team <support@proxmox.com>
-Standards-Version: 4.5.1
+Standards-Version: 4.7.2
 Vcs-Git: git://git.proxmox.com/git/proxmox-mail-forward.git
 Vcs-Browser: https://git.proxmox.com/?p=proxmox-mail-forward.git
 Homepage: https://www.proxmox.com

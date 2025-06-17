@@ -15,8 +15,8 @@ exclude = [ "debian" ]
 
 [dependencies]
 anyhow = "1.0"
-nix = "0.26"
+nix = "0.29"
 
-proxmox-log = "0.2.8"
-proxmox-notify = {version = "0.5.4", features = ["mail-forwarder", "pve-context", "pbs-context"] }
-proxmox-sys = "0.6"
+proxmox-log = "1"
+proxmox-notify = {version = "1", features = ["mail-forwarder", "pve-context", "pbs-context"] }
+proxmox-sys = "1"
