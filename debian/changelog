@@ -1,3 +1,9 @@
+rust-proxmox-mail-forward (0.3.3) bookworm; urgency=medium
+
+  * ensure any log messages get relayed to the system log.
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 17 Jun 2025 09:25:10 +0200
+
 rust-proxmox-mail-forward (0.3.2) bookworm; urgency=medium
 
   * rebuild with proxmox-notify version 0.5.4.
