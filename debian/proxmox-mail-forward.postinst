@@ -4,9 +4,13 @@ set -e
 
 case "$1" in
     configure)
-        # pve-manager is responsible for switching over, so skip when detecting pvemailforward
-        if ! test -f /root/.forward || ! grep -E -q '\|/usr/bin/(proxmox-mail-|pvemail)forward' /root/.forward; then
-            echo '|/usr/bin/proxmox-mail-forward' >>/root/.forward
+        # The entry is rewritten unconditionally
+        if test -f /root/.forward; then
+           sed -i '\!|/usr/bin/proxmox-mail-forward!d' /root/.forward
+        fi
+
+        if ! test -f /root/.forward || ! grep -q '|/usr/libexec/proxmox-mail-forward' /root/.forward; then
+            echo '|/usr/libexec/proxmox-mail-forward' >>/root/.forward
         fi
     ;;
 

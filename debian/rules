@@ -25,9 +25,16 @@ override_dh_auto_configure:
 	$(CARGO) prepare-debian $(CURDIR)/debian/cargo_registry --link-from-system
 	dh_auto_configure
 
+execute_after_dh_auto_install:
+	# Install the binary to /usr/libexec, not /usr/bin. Inspired by virtiofsd's d/rules
+	mkdir -p debian/proxmox-mail-forward/usr/libexec
+	mv debian/proxmox-mail-forward/usr/bin/proxmox-mail-forward debian/proxmox-mail-forward/usr/libexec/
+	chmod u+s debian/proxmox-mail-forward/usr/libexec/proxmox-mail-forward
+	rmdir debian/proxmox-mail-forward/usr/bin
+
 override_dh_fixperms:
 	dh_fixperms --exclude proxmox-mail-forward
 
 override_dh_strip:
 	dh_strip
-	patchelf --remove-needed librt.so.1 debian/proxmox-mail-forward/usr/bin/proxmox-mail-forward
+	patchelf --remove-needed librt.so.1 debian/proxmox-mail-forward/usr/libexec/proxmox-mail-forward

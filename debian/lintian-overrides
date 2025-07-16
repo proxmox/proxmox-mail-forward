@@ -1,1 +1,1 @@
-proxmox-mail-forward: elevated-privileges 4755 root/root [usr/bin/proxmox-mail-forward]
+proxmox-mail-forward: elevated-privileges 4755 root/root [usr/libexec/proxmox-mail-forward]
