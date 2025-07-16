@@ -1,3 +1,9 @@
+rust-proxmox-mail-forward (1.0.1) trixie; urgency=medium
+
+  * install executable to /usr/libexec instead of /usr/bin.
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 16 Jul 2025 16:29:14 +0200
+
 rust-proxmox-mail-forward (1.0.0) trixie; urgency=medium
 
   * re-build for Debian 13 Trixie based releases.
