@@ -1,3 +1,9 @@
+rust-proxmox-mail-forward (1.0.2) trixie; urgency=medium
+
+  * re-build with proxmox-http crate version 1.0.2
+
+ -- Proxmox Support Team <support@proxmox.com>  Mon, 04 Aug 2025 12:43:01 +0200
+
 rust-proxmox-mail-forward (1.0.1) trixie; urgency=medium
 
   * install executable to /usr/libexec instead of /usr/bin.

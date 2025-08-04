@@ -1,6 +1,6 @@
 [package]
 name = "proxmox-mail-forward"
-version = "1.0.1"
+version = "1.0.2"
 authors = [
     "Fiona Ebner <f.ebner@proxmox.com>",
     "Lukas Wagner <l.wagner@proxmox.com>",
