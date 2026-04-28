@@ -1,3 +1,17 @@
+rust-proxmox-mail-forward (1.0.3) trixie; urgency=medium
+
+  * notify: fix #6188: smtp: quote sender's display name if it contains
+    special characters that would otherwise produce an invalid From header.
+
+  * notify: warn if a user referenced by 'mailto-user' has no email address
+    configured, as such notifications would otherwise silently get dropped.
+
+  * notify: smtp, sendmail: list email recipients in stable order.
+
+  * re-build with newer versions of various Proxmox crates.
+
+ -- Proxmox Support Team <support@proxmox.com>  Tue, 28 Apr 2026 02:43:14 +0200
+
 rust-proxmox-mail-forward (1.0.2) trixie; urgency=medium
 
   * re-build with proxmox-http crate version 1.0.2
