@@ -1,3 +1,12 @@
+rust-proxmox-mail-forward (1.1.0) trixie; urgency=medium
+
+  * notify: rebuild against proxmox-notify 2.0 to support notification
+    configurations with nested match expressions. Older versions fail to
+    parse the whole configuration once a matcher uses the new 'expression'
+    option.
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 04 Nov 2026 22:28:54 +0100
+
 rust-proxmox-mail-forward (1.0.3) trixie; urgency=medium
 
   * notify: fix #6188: smtp: quote sender's display name if it contains
