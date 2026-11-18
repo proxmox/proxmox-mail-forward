@@ -34,6 +34,7 @@ Rules-Requires-Root: binary-targets
 Package: proxmox-mail-forward
 Architecture: any
 Depends: ${misc:Depends}, ${shlibs:Depends},
+Breaks: pve-manager (<< 9.2.32), proxmox-backup-server (<< 4.2.14-1)
 Description: Proxmox mail forward helper
  This package contains the Proxmox mail forward helper. It forwards mails to
  the address(es) of the root@pam user in Proxmox Backup Server and Proxmox VE.
