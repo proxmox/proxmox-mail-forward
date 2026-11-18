@@ -1,53 +1,111 @@
 //! A helper binary that forwards any mail passed via stdin to
-//! proxmox_notify.
+//! the notification queue of the currently installed Proxmox product.
+//!
+//! If multiple products are installed side-by-side, only one notification is created.
+//! The order of precedence is:
+//!   - PVE
+//!   - PBS
 //!
 //! The binary's path is added to /root/.forward, which means that
 //! postfix will invoke it when the local root user receives an email message.
 //! The message is passed via stdin.
-//! The binary is installed with setuid permissions and will thus run as
-//! root (euid ~ root, ruid ~ nobody)
+//! The binary is installed with setuid permissions and will thus start as
+//! root (euid ~ root, ruid ~ nobody).
 //!
-//! The forwarding behavior is the following:
-//!   - PVE installed: Use PVE's notifications.cfg
-//!   - PBS installed: Use PBS's notifications.cfg if present. If not,
-//!     use an empty configuration and add a default sendmail target and
-//!     a matcher - this is needed because notifications are not yet
-//!     integrated in PBS.
-//!   - PVE/PBS co-installed: Use PVE's config *and* PBS's config, but if
-//!     PBS's config does not exist, a default sendmail target will *not* be
-//!     added. We assume that PVE's config contains the desired notification
-//!     behavior for system mails.
+//! The setuid permissions are needed since postfix will run this binary as
+//! `nobody`. If we would not become `root` via a setuid binary, we would need to
+//! make the notification submission queue world-writable, which is
+//! not what we want.
 //!
+//! Root privileges are only needed to switch to the unprivileged user that
+//! submits to the notification queue of the installed product. Once the
+//! product has been determined, the binary permanently drops to that user and
+//! group before reading the mail from stdin.
+
 use std::io::Read;
 use std::path::Path;
 
+use anyhow::Context;
 use anyhow::Error;
+use anyhow::bail;
+use nix::unistd::Gid;
+use nix::unistd::Group;
+use nix::unistd::Uid;
+use nix::unistd::User;
 
 use proxmox_log::LevelFilter;
 use proxmox_log::Logger;
 use proxmox_log::error;
-use proxmox_notify::Config;
-use proxmox_notify::context::pbs::PBS_CONTEXT;
-use proxmox_notify::context::pve::PVE_CONTEXT;
-use proxmox_sys::fs;
+use proxmox_notify::Notification;
+use proxmox_notify::Severity;
+use proxmox_notify::queue::QueueSubmitter;
 
-const PVE_CFG_PATH: &str = "/etc/pve";
-const PVE_PUB_NOTIFICATION_CFG_FILENAME: &str = "/etc/pve/notifications.cfg";
-const PVE_PRIV_NOTIFICATION_CFG_FILENAME: &str = "/etc/pve/priv/notifications.cfg";
+/// A Proxmox product whose notifications are processed via a notification queue.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum Product {
+    /// Proxmox VE
+    Pve,
+    /// Proxmox Backup Server
+    Pbs,
+}
 
-const PBS_CFG_PATH: &str = "/etc/proxmox-backup";
-const PBS_PUB_NOTIFICATION_CFG_FILENAME: &str = "/etc/proxmox-backup/notifications.cfg";
-const PBS_PRIV_NOTIFICATION_CFG_FILENAME: &str = "/etc/proxmox-backup/notifications-priv.cfg";
+impl Product {
+    /// All supported products, in order of precedence.
+    const ALL: &[Product] = &[Product::Pve, Product::Pbs];
 
-/// Wrapper around `proxmox_sys::fs::file_read_optional_string` which also returns `None` upon error
-/// after logging it.
-fn attempt_file_read<P: AsRef<Path>>(path: P) -> Option<String> {
-    match fs::file_read_optional_string(path.as_ref()) {
-        Ok(contents) => contents,
-        Err(err) => {
-            error!("unable to read {path:?}: {err:#}", path = path.as_ref());
-            None
+    /// Directory of the product's notification queue.
+    fn queue_dir(self) -> &'static str {
+        match self {
+            Self::Pve => "/var/lib/pve-manager/notifications/queue",
+            Self::Pbs => "/var/lib/proxmox-backup/notifications/queue",
         }
+    }
+
+    /// Check whether the product is installed on this host.
+    ///
+    /// A product counts as installed if its notification queue directory exists.
+    fn is_installed(self) -> bool {
+        Path::new(self.queue_dir()).exists()
+    }
+
+    /// Name of the unprivileged user that notifications are submitted as.
+    fn user(self) -> &'static str {
+        match self {
+            Self::Pve => "www-data",
+            Self::Pbs => "backup",
+        }
+    }
+
+    /// Name of the unprivileged group that notifications are submitted as.
+    fn group(self) -> &'static str {
+        match self {
+            Self::Pve => "www-data",
+            Self::Pbs => "backup",
+        }
+    }
+
+    /// Look up the ID of the user that notifications are submitted as.
+    fn uid(self) -> Result<Uid, Error> {
+        let user = self.user();
+
+        let uid = User::from_name(user)
+            .with_context(|| format!("could not look up username {user}"))?
+            .with_context(|| format!("user {user} does not exist"))?
+            .uid;
+
+        Ok(uid)
+    }
+
+    /// Look up the ID of the group that notifications are submitted as.
+    fn gid(self) -> Result<Gid, Error> {
+        let group = self.group();
+
+        let gid = Group::from_name(group)
+            .with_context(|| format!("could not look up group {group}"))?
+            .with_context(|| format!("group {group} does not exist"))?
+            .gid;
+
+        Ok(gid)
     }
 }
 
@@ -61,55 +119,49 @@ fn read_stdin() -> Result<Vec<u8>, Error> {
     Ok(input)
 }
 
-fn forward_common(mail: &[u8], config: &Config) -> Result<(), Error> {
-    let real_uid = nix::unistd::getuid();
-    // The uid is passed so that `sendmail` can be called as the a correct user.
-    // (sendmail will show a warning if called from a setuid process)
-    let notification =
-        proxmox_notify::Notification::new_forwarded_mail(mail, Some(real_uid.as_raw()))?;
+fn installed_product() -> Result<Product, Error> {
+    Product::ALL
+        .iter()
+        .copied()
+        .find(|product| product.is_installed())
+        .context("no supported Proxmox product installed")
+}
 
-    proxmox_notify::api::common::send(config, &notification)?;
+/// Permanently switch to `uid` and `gid`, dropping all supplementary groups.
+///
+/// The real, effective and saved IDs are all set, so that the original privileges cannot be
+/// regained afterwards.
+fn drop_privileges(uid: Uid, gid: Gid) -> Result<(), Error> {
+    // Supplementary groups and the group IDs can only be changed while still privileged, so the
+    // user ID must be changed last.
+    nix::unistd::setgroups(&[]).context("could not drop supplementary groups")?;
+    nix::unistd::setresgid(gid, gid, gid).with_context(|| format!("could not set gid to {gid}"))?;
+    nix::unistd::setresuid(uid, uid, uid).with_context(|| format!("could not set uid to {uid}"))?;
+
+    if uid != Uid::from_raw(0) && nix::unistd::setuid(Uid::from_raw(0)).is_ok() {
+        bail!("root privileges could be regained after dropping them");
+    }
 
     Ok(())
 }
 
-/// Forward a mail to PVE's notification system
-fn forward_for_pve(mail: &[u8]) -> Result<(), Error> {
-    proxmox_notify::context::set_context(&PVE_CONTEXT);
-    let config = attempt_file_read(PVE_PUB_NOTIFICATION_CFG_FILENAME).unwrap_or_default();
-    let priv_config = attempt_file_read(PVE_PRIV_NOTIFICATION_CFG_FILENAME).unwrap_or_default();
+fn forward_mail_from_stdin() -> Result<(), Error> {
+    let product = installed_product()?;
+    drop_privileges(product.uid()?, product.gid()?)?;
 
-    let config = Config::new(&config, &priv_config)?;
+    let mail = read_stdin().context("could not read mail from STDIN")?;
 
-    forward_common(mail, &config)
-}
+    let queue = QueueSubmitter::new(product.queue_dir());
 
-/// Forward a mail to PBS's notification system
-fn forward_for_pbs(mail: &[u8], has_pve: bool) -> Result<(), Error> {
-    proxmox_notify::context::set_context(&PBS_CONTEXT);
+    let notification = Notification::forwarded_mail_builder(mail)
+        .severity(Severity::Unknown)
+        .field("hostname", proxmox_sys::nodename())
+        .field("type", "system-mail")
+        .build()?;
 
-    let config = if Path::new(PBS_PUB_NOTIFICATION_CFG_FILENAME).exists() {
-        let config = attempt_file_read(PBS_PUB_NOTIFICATION_CFG_FILENAME).unwrap_or_default();
-        let priv_config = attempt_file_read(PBS_PRIV_NOTIFICATION_CFG_FILENAME).unwrap_or_default();
-
-        Config::new(&config, &priv_config)?
-    } else {
-        // Instantiate empty config.
-        // Note: This will contain the default built-in targets/matchers.
-        let config = Config::new("", "")?;
-        if has_pve {
-            // Skip forwarding if we are co-installed with PVE AND
-            // we do not have our own notifications.cfg file yet
-            // --> We assume that PVE has a sane matcher configured that
-            // forwards the mail properly
-            // TODO: This can be removed once PBS has full notification integration
-
-            return Ok(());
-        }
-        config
-    };
-
-    forward_common(mail, &config)?;
+    queue
+        .submit(&notification)
+        .context("could not submit mail to notification queue")?;
 
     Ok(())
 }
@@ -119,31 +171,10 @@ fn main() {
         .journald()
         .init()
     {
-        eprintln!("unable to initialize syslog: {err}");
+        eprintln!("unable to initialize logging: {err}");
     }
 
-    // Read the mail that is to be forwarded from stdin
-    match read_stdin() {
-        Ok(mail) => {
-            let mut has_pve = false;
-
-            // Assume a PVE installation if /etc/pve exists
-            if Path::new(PVE_CFG_PATH).exists() {
-                has_pve = true;
-                if let Err(err) = forward_for_pve(&mail) {
-                    error!("could not forward mail for Proxmox VE: {err:#}");
-                }
-            }
-
-            // Assume a PBS installation if /etc/proxmox-backup exists
-            if Path::new(PBS_CFG_PATH).exists() {
-                if let Err(err) = forward_for_pbs(&mail, has_pve) {
-                    error!("could not forward mail for Proxmox Backup Server: {err:#}");
-                }
-            }
-        }
-        Err(err) => {
-            error!("could not read mail from STDIN: {err:#}")
-        }
+    if let Err(err) = forward_mail_from_stdin() {
+        error!("proxmox-mail-forward could not forward email: {err:#}");
     }
 }

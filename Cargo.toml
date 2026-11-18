@@ -18,8 +18,5 @@ anyhow = "1.0"
 nix = "0.29"
 
 proxmox-log = "1"
-proxmox-notify = {version = "2", features = ["mail-forwarder", "pve-context", "pbs-context", "legacy-matchers"] }
+proxmox-notify = { version = "2", features = ["queue-submitter"] }
 proxmox-sys = "1"
-
-# Not directly used, this is just to force it to the new version:
-proxmox-http = "1.0.2"
