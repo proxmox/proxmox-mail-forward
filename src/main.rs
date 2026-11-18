@@ -24,6 +24,7 @@
 
 use std::io::Read;
 use std::path::Path;
+use std::process::ExitCode;
 
 use anyhow::Context;
 use anyhow::Error;
@@ -39,6 +40,37 @@ use proxmox_log::error;
 use proxmox_notify::Notification;
 use proxmox_notify::Severity;
 use proxmox_notify::queue::QueueSubmitter;
+
+enum ForwardError {
+    Temporary(Error),
+    Bounce(Error),
+}
+
+impl From<ForwardError> for ExitCode {
+    fn from(value: ForwardError) -> Self {
+        match value {
+            // EX_TEMPFAIL -> postfix retries later
+            ForwardError::Temporary(_) => ExitCode::from(75),
+            // EX_DATAERR -> mail bounces
+            ForwardError::Bounce(_) => ExitCode::from(65),
+        }
+    }
+}
+
+impl std::fmt::Display for ForwardError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ForwardError::Temporary(error) => write!(
+                f,
+                "proxmox-mail-forward could not forward email to notification queue, retrying later: {error:#}"
+            ),
+            ForwardError::Bounce(error) => write!(
+                f,
+                "proxmox-mail-forward could not forward email, rejecting it: {error:#}"
+            ),
+        }
+    }
+}
 
 /// A Proxmox product whose notifications are processed via a notification queue.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -145,11 +177,17 @@ fn drop_privileges(uid: Uid, gid: Gid) -> Result<(), Error> {
     Ok(())
 }
 
-fn forward_mail_from_stdin() -> Result<(), Error> {
-    let product = installed_product()?;
-    drop_privileges(product.uid()?, product.gid()?)?;
+fn forward_mail_from_stdin() -> Result<(), ForwardError> {
+    let product = installed_product().map_err(ForwardError::Temporary)?;
+    drop_privileges(
+        product.uid().map_err(ForwardError::Temporary)?,
+        product.gid().map_err(ForwardError::Temporary)?,
+    )
+    .map_err(ForwardError::Temporary)?;
 
-    let mail = read_stdin().context("could not read mail from STDIN")?;
+    let mail = read_stdin()
+        .context("could not read mail from STDIN")
+        .map_err(ForwardError::Bounce)?;
 
     let queue = QueueSubmitter::new(product.queue_dir());
 
@@ -157,16 +195,18 @@ fn forward_mail_from_stdin() -> Result<(), Error> {
         .severity(Severity::Unknown)
         .field("hostname", proxmox_sys::nodename())
         .field("type", "system-mail")
-        .build()?;
+        .build()
+        .map_err(|err| ForwardError::Bounce(err.into()))?;
 
     queue
         .submit(&notification)
-        .context("could not submit mail to notification queue")?;
+        .context("could not submit mail to notification queue")
+        .map_err(ForwardError::Temporary)?;
 
     Ok(())
 }
 
-fn main() {
+fn main() -> ExitCode {
     if let Err(err) = Logger::from_env("PROXMOX_LOG", LevelFilter::INFO)
         .journald()
         .init()
@@ -175,6 +215,14 @@ fn main() {
     }
 
     if let Err(err) = forward_mail_from_stdin() {
-        error!("proxmox-mail-forward could not forward email: {err:#}");
+        error!("{err:#}");
+
+        // Print the error to stderr as well, since that will be shown
+        // in `mailq` output for deferred emails.
+        eprintln!("{err:#}");
+
+        return err.into();
     }
+
+    ExitCode::SUCCESS
 }
