@@ -27,7 +27,7 @@ tracing = "0.1"
 proxmox-async = "0.5"
 proxmox-daemon = "1"
 proxmox-log = "1"
-proxmox-notify = "2"
+proxmox-notify = "3"
 proxmox-sys = "1"
 
 common = { path = "common" }
