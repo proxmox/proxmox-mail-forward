@@ -1,0 +1,16 @@
+[package]
+name = "proxmox-mail-forward"
+description = "Proxmox mail forward helper"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+nix.workspace = true
+
+proxmox-log.workspace = true
+proxmox-notify = { workspace = true, features = ["queue-submitter"] }
+proxmox-sys.workspace = true

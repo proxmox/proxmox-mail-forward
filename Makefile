@@ -1,5 +1,6 @@
 include /usr/share/dpkg/pkg-info.mk
 include /usr/share/dpkg/architecture.mk
+include /usr/share/rustc/architecture.mk
 
 PACKAGE=proxmox-mail-forward
 BUILDDIR ?= $(PACKAGE)-$(DEB_VERSION)
@@ -11,8 +12,8 @@ DBG_DEB=$(PACKAGE)-dbgsym_$(DEB_VERSION)_$(DEB_HOST_ARCH).deb
 DEBS=$(DEB) $(DBG_DEB)
 
 ifeq ($(BUILD_MODE), release)
-CARGO_BUILD_ARGS += --release
-COMPILEDIR := target/release
+CARGO_BUILD_ARGS += --release --target $(DEB_HOST_RUST_TYPE)
+COMPILEDIR := target/$(DEB_HOST_RUST_TYPE)/release
 else
 COMPILEDIR := target/debug
 endif
@@ -21,7 +22,7 @@ CARGO ?= cargo
 
 $(BUILDDIR):
 	rm -rf $@ $@.tmp && mkdir $@.tmp
-	cp -a debian Cargo.toml src Makefile .cargo $@.tmp
+	cp -a debian Cargo.toml proxmox-mail-forward Makefile .cargo $@.tmp
 	rm -f $@.tmp/Cargo.lock
 	find $@.tmp/debian -name "*.hint" -delete
 	mv $@.tmp $@
@@ -49,11 +50,11 @@ dinstall: $(DEBS)
 .PHONY: cargo-build
 cargo-build:
 	$(CARGO) build $(CARGO_BUILD_ARGS) \
-	    --package proxmox-mail-forward \
-	    --bin proxmox-mail-forward
+	    --package proxmox-mail-forward
 
 install: cargo-build
-	$(CARGO) install
+	install -d $(DESTDIR)/usr/libexec
+	install -m 0755 $(COMPILEDIR)/proxmox-mail-forward $(DESTDIR)/usr/libexec/
 
 .PHONY: upload
 upload: $(DEBS)
