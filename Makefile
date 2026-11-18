@@ -22,7 +22,7 @@ CARGO ?= cargo
 
 $(BUILDDIR):
 	rm -rf $@ $@.tmp && mkdir $@.tmp
-	cp -a debian Cargo.toml proxmox-mail-forward Makefile .cargo $@.tmp
+	cp -a debian Cargo.toml common proxmox-mail-forward Makefile .cargo $@.tmp
 	rm -f $@.tmp/Cargo.lock
 	find $@.tmp/debian -name "*.hint" -delete
 	mv $@.tmp $@

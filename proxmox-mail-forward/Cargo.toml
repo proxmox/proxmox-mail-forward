@@ -11,6 +11,8 @@ homepage.workspace = true
 anyhow.workspace = true
 nix.workspace = true
 
+common.workspace = true
+
 proxmox-log.workspace = true
 proxmox-notify = { workspace = true, features = ["queue-submitter"] }
 proxmox-sys.workspace = true

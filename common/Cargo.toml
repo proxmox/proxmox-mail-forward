@@ -1,0 +1,13 @@
+[package]
+name = "common"
+description = "Shared definitions for the Proxmox mail forwarder and notification worker"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+publish = false
+
+[dependencies]
+anyhow.workspace = true
+nix = { workspace = true, features = [ "user" ] }

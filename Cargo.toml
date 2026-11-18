@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    "common",
     "proxmox-mail-forward",
 ]
 resolver = "3"
@@ -22,3 +23,5 @@ nix = "0.29"
 proxmox-log = "1"
 proxmox-notify = "2"
 proxmox-sys = "1"
+
+common = { path = "common" }

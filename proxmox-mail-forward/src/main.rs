@@ -23,16 +23,15 @@
 //! group before reading the mail from stdin.
 
 use std::io::Read;
-use std::path::Path;
 use std::process::ExitCode;
 
 use anyhow::Context;
 use anyhow::Error;
 use anyhow::bail;
 use nix::unistd::Gid;
-use nix::unistd::Group;
 use nix::unistd::Uid;
-use nix::unistd::User;
+
+use common::Product;
 
 use proxmox_log::LevelFilter;
 use proxmox_log::Logger;
@@ -69,75 +68,6 @@ impl std::fmt::Display for ForwardError {
                 "proxmox-mail-forward could not forward email, rejecting it: {error:#}"
             ),
         }
-    }
-}
-
-/// A Proxmox product whose notifications are processed via a notification queue.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-enum Product {
-    /// Proxmox VE
-    Pve,
-    /// Proxmox Backup Server
-    Pbs,
-}
-
-impl Product {
-    /// All supported products, in order of precedence.
-    const ALL: &[Product] = &[Product::Pve, Product::Pbs];
-
-    /// Directory of the product's notification queue.
-    fn queue_dir(self) -> &'static str {
-        match self {
-            Self::Pve => "/var/lib/pve-manager/notifications/queue",
-            Self::Pbs => "/var/lib/proxmox-backup/notifications/queue",
-        }
-    }
-
-    /// Check whether the product is installed on this host.
-    ///
-    /// A product counts as installed if its notification queue directory exists.
-    fn is_installed(self) -> bool {
-        Path::new(self.queue_dir()).exists()
-    }
-
-    /// Name of the unprivileged user that notifications are submitted as.
-    fn user(self) -> &'static str {
-        match self {
-            Self::Pve => "www-data",
-            Self::Pbs => "backup",
-        }
-    }
-
-    /// Name of the unprivileged group that notifications are submitted as.
-    fn group(self) -> &'static str {
-        match self {
-            Self::Pve => "www-data",
-            Self::Pbs => "backup",
-        }
-    }
-
-    /// Look up the ID of the user that notifications are submitted as.
-    fn uid(self) -> Result<Uid, Error> {
-        let user = self.user();
-
-        let uid = User::from_name(user)
-            .with_context(|| format!("could not look up username {user}"))?
-            .with_context(|| format!("user {user} does not exist"))?
-            .uid;
-
-        Ok(uid)
-    }
-
-    /// Look up the ID of the group that notifications are submitted as.
-    fn gid(self) -> Result<Gid, Error> {
-        let group = self.group();
-
-        let gid = Group::from_name(group)
-            .with_context(|| format!("could not look up group {group}"))?
-            .with_context(|| format!("group {group} does not exist"))?
-            .gid;
-
-        Ok(gid)
     }
 }
 
