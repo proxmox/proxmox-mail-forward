@@ -1,0 +1,13 @@
+[Unit]
+Description=Proxmox VE notification worker
+Wants=network-online.target pve-cluster.service
+After=network-online.target pve-cluster.service
+
+[Service]
+Type=exec
+ExecStart=/usr/libexec/proxmox/pve-notify-worker
+KillSignal=SIGINT
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

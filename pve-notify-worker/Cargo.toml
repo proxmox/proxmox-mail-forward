@@ -1,0 +1,21 @@
+[package]
+name = "pve-notify-worker"
+description = "Proxmox VE notification worker"
+version.workspace = true
+authors.workspace = true
+edition.workspace = true
+license.workspace = true
+homepage.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+futures.workspace = true
+tokio = { workspace = true, features = [ "full" ] }
+tracing.workspace = true
+
+common.workspace = true
+
+proxmox-async.workspace = true
+proxmox-daemon.workspace = true
+proxmox-log.workspace = true
+proxmox-notify = { workspace = true, features = [ "send-impl", "queue-worker", "pve-context", "legacy-matchers" ]}

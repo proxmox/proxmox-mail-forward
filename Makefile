@@ -8,8 +8,10 @@ BUILDDIR ?= $(PACKAGE)-$(DEB_VERSION)
 DSC=rust-$(PACKAGE)_$(DEB_VERSION_UPSTREAM).dsc
 DEB=$(PACKAGE)_$(DEB_VERSION)_$(DEB_HOST_ARCH).deb
 DBG_DEB=$(PACKAGE)-dbgsym_$(DEB_VERSION)_$(DEB_HOST_ARCH).deb
+WORKER_DEB=pve-notify-worker_$(DEB_VERSION)_$(DEB_HOST_ARCH).deb
+WORKER_DBG_DEB=pve-notify-worker-dbgsym_$(DEB_VERSION)_$(DEB_HOST_ARCH).deb
 
-DEBS=$(DEB) $(DBG_DEB)
+DEBS=$(DEB) $(DBG_DEB) $(WORKER_DEB) $(WORKER_DBG_DEB)
 
 ifeq ($(BUILD_MODE), release)
 CARGO_BUILD_ARGS += --release --target $(DEB_HOST_RUST_TYPE)
@@ -22,7 +24,7 @@ CARGO ?= cargo
 
 $(BUILDDIR):
 	rm -rf $@ $@.tmp && mkdir $@.tmp
-	cp -a debian Cargo.toml common proxmox-mail-forward Makefile .cargo $@.tmp
+	cp -a debian Cargo.toml common proxmox-mail-forward pve-notify-worker Makefile .cargo $@.tmp
 	rm -f $@.tmp/Cargo.lock
 	find $@.tmp/debian -name "*.hint" -delete
 	mv $@.tmp $@
@@ -50,15 +52,18 @@ dinstall: $(DEBS)
 .PHONY: cargo-build
 cargo-build:
 	$(CARGO) build $(CARGO_BUILD_ARGS) \
-	    --package proxmox-mail-forward
+	    --package proxmox-mail-forward \
+	    --package pve-notify-worker
 
 install: cargo-build
-	install -d $(DESTDIR)/usr/libexec
+	install -d $(DESTDIR)/usr/libexec/proxmox
 	install -m 0755 $(COMPILEDIR)/proxmox-mail-forward $(DESTDIR)/usr/libexec/
+	install -m 0755 $(COMPILEDIR)/pve-notify-worker $(DESTDIR)/usr/libexec/proxmox/
 
 .PHONY: upload
 upload: $(DEBS)
-	tar cf - $(DEBS) | ssh -X repoman@repo.proxmox.com -- upload --product pve,pbs,pdm --dist $(DEB_DISTRIBUTION) --arch $(DEB_HOST_ARCH)
+	tar cf - $(DEB) $(DBG_DEB) | ssh -X repoman@repo.proxmox.com -- upload --product pve,pbs,pdm --dist $(DEB_DISTRIBUTION) --arch $(DEB_HOST_ARCH)
+	tar cf - $(WORKER_DEB) $(WORKER_DBG_DEB) | ssh -X repoman@repo.proxmox.com -- upload --product pve --dist $(DEB_DISTRIBUTION) --arch $(DEB_HOST_ARCH)
 
 .PHONY: distclean
 distclean: clean

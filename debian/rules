@@ -25,7 +25,7 @@ override_dh_auto_configure:
 	$(CARGO) prepare-debian $(CURDIR)/debian/cargo_registry --link-from-system
 	dh_auto_configure
 
-execute_after_dh_auto_install:
+execute_after_dh_install:
 	chmod u+s debian/proxmox-mail-forward/usr/libexec/proxmox-mail-forward
 
 override_dh_fixperms:

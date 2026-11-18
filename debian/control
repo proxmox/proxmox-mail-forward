@@ -5,12 +5,22 @@ Build-Depends: cargo:native,
                debhelper-compat (= 13),
                dh-cargo (>= 25),
                librust-anyhow-1+default-dev,
+               librust-futures-0.3+default-dev,
                librust-nix-0.29+default-dev,
                librust-nix-0.29+user-dev,
+               librust-proxmox-async-0.5+default-dev,
+               librust-proxmox-daemon-1+default-dev,
                librust-proxmox-log-1+default-dev,
                librust-proxmox-notify-2+default-dev,
+               librust-proxmox-notify-2+legacy-matchers-dev,
+               librust-proxmox-notify-2+pve-context-dev,
                librust-proxmox-notify-2+queue-submitter-dev,
+               librust-proxmox-notify-2+queue-worker-dev,
+               librust-proxmox-notify-2+send-impl-dev,
                librust-proxmox-sys-1+default-dev,
+               librust-tokio-1+default-dev (>= 1.6-~~),
+               librust-tokio-1+full-dev (>= 1.6-~~),
+               librust-tracing-0.1+default-dev,
                libstd-rust-dev,
                patchelf,
                rustc:native,
@@ -27,3 +37,10 @@ Depends: ${misc:Depends}, ${shlibs:Depends},
 Description: Proxmox mail forward helper
  This package contains the Proxmox mail forward helper. It forwards mails to
  the address(es) of the root@pam user in Proxmox Backup Server and Proxmox VE.
+
+Package: pve-notify-worker
+Architecture: any
+Depends: ${misc:Depends}, ${shlibs:Depends},
+Description: Proxmox VE notification worker
+ This package contains the worker that processes the notification queue of
+ Proxmox VE.

@@ -2,6 +2,7 @@
 members = [
     "common",
     "proxmox-mail-forward",
+    "pve-notify-worker",
 ]
 resolver = "3"
 
@@ -18,8 +19,13 @@ homepage = "https://www.proxmox.com"
 
 [workspace.dependencies]
 anyhow = "1.0"
+futures = "0.3"
 nix = "0.29"
+tokio = "1.6"
+tracing = "0.1"
 
+proxmox-async = "0.5"
+proxmox-daemon = "1"
 proxmox-log = "1"
 proxmox-notify = "2"
 proxmox-sys = "1"
