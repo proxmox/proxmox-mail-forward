@@ -141,14 +141,31 @@ impl Product {
     }
 }
 
-/// Read data from stdin, until EOF is encountered.
-fn read_stdin() -> Result<Vec<u8>, Error> {
+/// Maximum number of bytes read from stdin, as a safeguard against excessively large mails.
+const MAX_MAIL_SIZE: u64 = 1024 * 1024;
+
+/// Read data from `reader` until EOF is encountered.
+///
+/// Returns an error if the input exceeds `limit` bytes.
+fn read_limited(reader: impl Read, limit: u64) -> Result<Vec<u8>, Error> {
     let mut input = Vec::new();
-    let stdin = std::io::stdin();
-    let mut handle = stdin.lock();
+    // Read one additional byte to detect whether the input exceeds the limit.
+    let mut handle = reader.take(limit + 1);
 
     handle.read_to_end(&mut input)?;
+
+    if input.len() as u64 > limit {
+        bail!("mail exceeds maximum size of {limit} bytes");
+    }
+
     Ok(input)
+}
+
+/// Read data from stdin until EOF is encountered.
+///
+/// Returns an error if the input exceeds [`MAX_MAIL_SIZE`] bytes.
+fn read_stdin() -> Result<Vec<u8>, Error> {
+    read_limited(std::io::stdin().lock(), MAX_MAIL_SIZE)
 }
 
 fn installed_product() -> Result<Product, Error> {
@@ -225,4 +242,35 @@ fn main() -> ExitCode {
     }
 
     ExitCode::SUCCESS
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn read_limited_below_limit() {
+        let data = b"Subject: test\n\nbody\n";
+        let input = read_limited(&data[..], 64).unwrap();
+        assert_eq!(input, data);
+    }
+
+    #[test]
+    fn read_limited_exactly_at_limit() {
+        let data = vec![b'a'; 64];
+        let input = read_limited(&data[..], 64).unwrap();
+        assert_eq!(input, data);
+    }
+
+    #[test]
+    fn read_limited_rejects_above_limit() {
+        let data = vec![b'a'; 65];
+        assert!(read_limited(&data[..], 64).is_err());
+    }
+
+    #[test]
+    fn read_limited_empty() {
+        let input = read_limited(&b""[..], 64).unwrap();
+        assert!(input.is_empty());
+    }
 }
