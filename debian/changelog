@@ -1,3 +1,19 @@
+rust-proxmox-mail-forward (1.2.0) trixie; urgency=medium
+
+  * forward mails through the notification queue of the installed product
+    instead of sending them directly. The setuid helper no longer parses the
+    notification configuration with its secrets, and it drops all privileges
+    before reading the mail. If both Proxmox VE and Proxmox Backup Server are
+    installed, mails are only handed to the notification system of Proxmox VE.
+
+  * reject mails larger than 1 MiB, and let the mail system try again later if
+    a mail cannot be queued, instead of losing it.
+
+  * add the pve-notify-worker package with the service that sends the queued
+    notifications of Proxmox VE.
+
+ -- Proxmox Support Team <support@proxmox.com>  Wed, 18 Nov 2026 21:42:22 +0100
+
 rust-proxmox-mail-forward (1.1.0) trixie; urgency=medium
 
   * notify: rebuild against proxmox-notify 2.0 to support notification
